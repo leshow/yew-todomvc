@@ -1,0 +1,7 @@
+[package]
+name = "todomvc"
+version = "0.1.0"
+authors = ["Evan Cameron <cameron.evan@gmail.com>"]
+
+[dependencies]
+yew = "0.0.1"

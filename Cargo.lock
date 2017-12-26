@@ -1,0 +1,14 @@
+[[package]]
+name = "todomvc"
+version = "0.1.0"
+dependencies = [
+ "yew 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "yew"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[metadata]
+"checksum yew 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "3b32fa8d916bb0f26431a2f1f95012c705707500ec994313217e181184c4e5cd"
