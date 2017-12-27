@@ -88,3 +88,12 @@ fn view(model: &Model) -> Html<Msg> {
         </div>
     }
 }
+
+fn input_html(model: &Model) -> Html<Msg> {
+    html! {
+        <input class="new-todo",
+            placeholder="What needs to be done?",
+            value=&model.field,
+        />
+    }
+}
