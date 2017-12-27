@@ -1,3 +1,5 @@
+#![recursion_limit="128"]
+
 #[macro_use]
 extern crate yew;
 
@@ -9,15 +11,25 @@ struct Model {
     field: String,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 enum Filter {
     All,
     Active,
     Completed,
 }
 
+impl ToString for Filter {
+    fn to_string(&self) -> String {
+        match *self {
+            Filter::All => "all".into(),
+            Filter::Active => "active".into(),
+            Filter::Completed => "completed".into()
+        }
+    }
+}
+
 struct Todo {
-    id: i32,
+    id: usize,
     body: String,
     status: Status,
 }
@@ -42,7 +54,8 @@ enum Msg {
 use self::Msg::*;
 
 fn main() {
-    println!("Hello, world!");
+    let model = Model::new();
+    program(model, update, view);
 }
 
 fn update(ctx: &mut Context<Msg>, model: &mut Model, msg: Msg) {
@@ -64,11 +77,13 @@ fn view(model: &Model) -> Html<Msg> {
             <section class="todoapp",>
                 <header class="header",>
                     <h1> {"todos"} </h1>
-                    {input_html(&model)}
                 </header>
             <section class="main",>
-                <input class="toggle-all",/>
+                <input class="toggle-all",
+                    onclick=|_| Msg::ToggleAll,
+                    checked=model.all_completed(),/>
                 <ul class="todo-list",>
+                    { for model.todos.iter().enumerate().map(todo_html) }
                 </ul>
             </section>
                 <footer class="footer",>
@@ -76,6 +91,9 @@ fn view(model: &Model) -> Html<Msg> {
                         <strong></strong> { " item(s) left" }
                     </span>
                     <ul class="filters",>
+                        { filter_html(&model, Filter::All) }
+                        { filter_html(&model, Filter::Active) }
+                        { filter_html(&model, Filter::Completed) }
                     </ul>
                     <button class="clear-completed",>
                     </button>
@@ -89,11 +107,69 @@ fn view(model: &Model) -> Html<Msg> {
     }
 }
 
-fn input_html(model: &Model) -> Html<Msg> {
+fn filter_html(model: &Model, filter: Filter) -> Html<Msg> {
+    let fstring = filter.to_string();
+    html! {
+        <li>
+            <a class= if model.filter == filter { "selected" } else { "not-selected" },
+                href=&filter,
+                onclick=move |_| ChangeFilter(filter.clone()),
+            >
+            { fstring }
+        </li>
+    }
+}
+
+impl<'a> Into<Href> for &'a Filter {
+    fn into(self) -> Href {
+        match *self {
+            Filter::All => Href::from("#/"),
+            Filter::Active => Href::from("#/active"),
+            Filter::Completed => Href::from("#/completed"),
+        }
+    }
+}
+
+fn input_html((idx, model): (usize, &Model)) -> Html<Msg> {
     html! {
         <input class="new-todo",
             placeholder="What needs to be done?",
             value=&model.field,
+            oninput=|e: InputData| Update(e.value),
+            onkeypress=|e: KeyData| {
+                if e.key == "Enter" { Add } else { Nil }
+            },
         />
+    }
+}
+
+fn todo_html((idx, todo): (usize, &Todo)) -> Html<Msg> {
+    html! {
+        <li>
+            <div class="view",>
+                <input class="toggle",
+                    type="checkbox",
+                    checked=(todo.status == Status::Completed),
+                    onclick=move|_| Toggle(idx),
+                />
+                <label>{ &todo.body }</label>
+                <button class="destroy",
+                    onclick=move |_| Remove(idx),/>
+            </div>
+        </li>
+    }
+}
+
+impl Model {
+    fn new() -> Model {
+        Model {
+            todos: Vec::new(),
+            filter: Filter::All,
+            field: "".into(),
+        }
+    }
+
+    fn all_completed(&self) -> bool {
+        self.todos.iter().filter(|t| t.status == Status::Completed).count() == self.todos.len()
     }
 }
